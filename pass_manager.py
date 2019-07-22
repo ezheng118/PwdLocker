@@ -3,8 +3,9 @@ import pyperclip
 import os.path
 import argparse
 
-#possibly add the ability to make and retrieve accounts using -a "acctname"
+#add the ability to make and retrieve accounts using -a "acctname"
 #make a local chrome extension for autofilling passwords
+#add a feature to backup password file
 
 def login():
     if not os.path.isfile("./master_pass.txt"):
@@ -51,20 +52,29 @@ def load_passwords():
     
     return pass_dict
 
-def get_password(password_dict):
-    print("Enter the name of the account you would like the password for: ")
-    acct_name = str(input())
-    while acct_name not in password_dict:
-        print("That is not a valid account name")
-        print("Please enter the name of the accont: ")
+def get_password(password_dict, acct_name = ""):
+    if acct_name == "":
+        print("Enter the name of the account you would like the password for: ")
         acct_name = str(input())
+
+    while acct_name not in password_dict:
+        print("The account name you entered is not valid")
+        print("Please enter the name of a valid account: ")
+        acct_name = str(input())
+    
     pyperclip.copy(password_dict[acct_name])
     print("password for " + acct_name + " copied to clipboard")
 
 #should be replaced with a password generating function
-def add_new_password(password_dict):
-    print("Enter account name: ")
-    acct_name = str(input())
+def add_new_password(password_dict, acct_name = ""):
+    if acct_name == "":
+        print("Enter account name: ")
+        acct_name = str(input())
+
+    while acct_name in password_dict:
+        print("The account name you entered already has an associated password.\nPlease enter a different account name:")
+        acct_name = str(input())
+
     print("Enter account password: ")
     pwd = str(input())
     password_dict[acct_name] = pwd
@@ -72,28 +82,13 @@ def add_new_password(password_dict):
 def save_quit(password_dict):
     fname = "./passwords.txt"
     if not os.path.isfile(fname):
-        print("Error: passwords file does not exist, creating a separate file to store passwords")
-        fname = "./passwords_backup.txt"
+        print("Error: passwords file does not exist, a new password file will be created")
     
     with open(fname, mode = "w") as outfile:
         for key in password_dict:
             outfile.write(str(key) + "," + str(password_dict[key]) + "\n")
 
-if __name__ == "__main__":
-    if not login():
-        print("login failed")
-        quit()
-    
-    print("\nlogin successful")
-    
-    #put all of the user's passwords into a dictionary
-    #k = account name
-    #v = account password
-    passwords = load_passwords()
-    
-    for key in passwords:
-        print(key + " " + passwords[key])
-
+def run_prog(password_dict):
     user_input = 0
     while user_input != 3:
         print("Enter the number corresponding what you want to do.")
@@ -108,8 +103,46 @@ if __name__ == "__main__":
 
         user_input = int(user_input)
         if user_input == 1:
-            get_password(passwords)
+            get_password(password_dict)
         elif user_input == 2:
-            add_new_password(passwords)
+            add_new_password(password_dict)
+
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser(description = "store and retrieve passwords through the command line")
+
+    parser.add_argument("-n", "--new", help = "optional flag to add a new account and its associated password", 
+        required = False, action = "store_true")
+    parser.add_argument("-g", "--get", help = "optional flag to retrieve the password associated with a certain account",
+        required = False, action = "store_true")
+    parser.add_argument("-a", "--acct", help = '''used with -n or -g to either add a new password or retrieve a password, 
+        will do nothing if other flags are not specified''',
+        required = False, default = "", type = str)
+
+    args = vars(parser.parse_args())
+
+    if not login():
+        print("login failed")
+        quit()
     
+    print("\nlogin successful\n")
+    
+    #put all of the user's passwords into a dictionary
+    #k = account name
+    #v = account password
+    passwords = load_passwords()
+    
+    for key in passwords:
+        print(key + " " + passwords[key])
+
+    for item in args:
+        print(item + " value: " + str(args[item]))
+    print("\n")
+
+    if args["new"] == True:
+        add_new_password(passwords, args["acct"])
+    elif args["get"] == True:
+        get_password(passwords, args["acct"])
+    else:
+        run_prog(passwords)
+        
     save_quit(passwords)
