@@ -79,6 +79,11 @@ def add_new_password(password_dict, acct_name = ""):
     pwd = str(input())
     password_dict[acct_name] = pwd
 
+def list_account_names(password_dict):
+    print("\nThe accounts on this machine with associated passwords are:")
+    for key in password_dict:
+        print(key)
+
 def save_quit(password_dict):
     fname = "./passwords.txt"
     if not os.path.isfile(fname):
@@ -90,11 +95,12 @@ def save_quit(password_dict):
 
 def run_prog(password_dict):
     user_input = 0
-    while user_input != 3:
+    while user_input != 4:
         print("Enter the number corresponding what you want to do.")
         print("1. Retrieve a password")
         print("2. Add a new password")
-        print("3. Save and quit")
+        print("3. List accounts")
+        print("4. Save and quit")
 
         user_input = str(input())
         while not user_input.isdecimal():
@@ -106,6 +112,8 @@ def run_prog(password_dict):
             get_password(password_dict)
         elif user_input == 2:
             add_new_password(password_dict)
+        elif user_input == 3:
+            list_account_names(password_dict)
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description = "store and retrieve passwords through the command line")
@@ -117,6 +125,8 @@ if __name__ == "__main__":
     parser.add_argument("-a", "--acct", help = '''used with -n or -g to either add a new password or retrieve a password, 
         will do nothing if other flags are not specified''',
         required = False, default = "", type = str)
+    parser.add_argument("-l", "--list", help = "lists the names of the accounts stored in the manager program",
+        required = False, action = "store_true")
 
     args = vars(parser.parse_args())
 
@@ -131,17 +141,19 @@ if __name__ == "__main__":
     #v = account password
     passwords = load_passwords()
     
-    for key in passwords:
+    '''for key in passwords:
         print(key + " " + passwords[key])
 
     for item in args:
         print(item + " value: " + str(args[item]))
-    print("\n")
+    print("\n")'''
 
     if args["new"] == True:
         add_new_password(passwords, args["acct"])
     elif args["get"] == True:
         get_password(passwords, args["acct"])
+    elif args["list"] == True:
+        list_account_names(passwords)
     else:
         run_prog(passwords)
         
