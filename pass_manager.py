@@ -2,22 +2,21 @@
 import pyperclip
 import os.path
 import argparse
-
-#add the ability to make and retrieve accounts using -a "acctname"
-#make a local chrome extension for autofilling passwords
-#add a feature to backup password file
+import hashlib
 
 def login():
     if not os.path.isfile("./master_pass.txt"):
+        #if there is not a master password file that exists, create one
         open("master_pass.txt", mode="w")
 
     with open("master_pass.txt", mode="r+", encoding = "utf-8") as mp:
         maspass = mp.readline()
         if maspass != '':
             #print("mp file not empty")
-            print("Enter master password: ")
-            pwd_in = str(input())
-            if maspass == pwd_in:
+            pwd_in = str(input("Enter master password: ")).encode()
+
+            #check the hash of the password to see if it is correct
+            if maspass == hashlib.sha256(pwd_in).hexdigest():
                 print("correct password")
                 return True
             else:
@@ -32,8 +31,11 @@ def login():
 
 def add_new_master_pass(output_file):
     print("It appears you have not set up a master password to use this password manager with.")
-    print("Please enter a password: ")
-    output_file.write(str(input()))
+    
+    #the user input is hashed before it is outputted
+    user_input = str(input("Please enter a password: ")).encode()
+    hashed_pwd_digest = hashlib.sha256(user_input).hexdigest()
+    output_file.write(hashed_pwd_digest)
 
 def load_passwords():
     if not os.path.isfile("./passwords.txt"):
@@ -43,12 +45,12 @@ def load_passwords():
 
     with open("passwords.txt", mode="r") as pf:
         for line in pf:
-            item = line.split(',')
+            key, val = line.split(',')
             #gets the contents of the line excluding the newline character at the end
-            if item[1][-1] == "\n":
-                pass_dict[item[0]] = item[1][:-1]
+            if val[-1] == "\n":
+                pass_dict[key] = val[:-1]
             else:
-                pass_dict[item[0]] = item[1]
+                pass_dict[key] = val
     
     return pass_dict
 
@@ -104,8 +106,7 @@ def run_prog(password_dict):
 
         user_input = str(input())
         while not user_input.isdecimal():
-            print("Please input a valid response: ")
-            user_input = str(input())
+            user_input = str(input("Please input a valid response: "))
 
         user_input = int(user_input)
         if user_input == 1:
@@ -134,7 +135,7 @@ if __name__ == "__main__":
         print("login failed")
         quit()
     
-    print("\nlogin successful\n")
+    print("\nlogin successful")
     
     #put all of the user's passwords into a dictionary
     #k = account name
