@@ -1,15 +1,21 @@
 #! python3
+
 import pyperclip
 import os.path
+import inspect
 import argparse
 import hashlib
 
-def login():
-    if not os.path.isfile("./master_pass.txt"):
-        #if there is not a master password file that exists, create one
-        open("master_pass.txt", mode="w")
+# currently only compatible with linux i think
 
-    with open("master_pass.txt", mode="r+", encoding = "utf-8") as mp:
+def login():
+    mpwd_file = get_dirname() + "/master_pass.txt"
+
+    if not os.path.isfile(mpwd_file):
+        #if there is not a master password file that exists, create one
+        open(mpwd_file, mode="w")
+
+    with open(mpwd_file, mode="r+", encoding = "utf-8") as mp:
         maspass = mp.readline()
         if maspass != '':
             #print("mp file not empty")
@@ -38,12 +44,14 @@ def add_new_master_pass(output_file):
     output_file.write(hashed_pwd_digest)
 
 def load_passwords():
-    if not os.path.isfile("./passwords.txt"):
-        open("passwords.txt", mode="w")
+    pwd_file = get_dirname() + "/passwords.txt"
+
+    if not os.path.isfile(pwd_file):
+        open(pwd_file, mode="w")
    
     pass_dict = {}
 
-    with open("passwords.txt", mode="r") as pf:
+    with open(pwd_file, mode="r") as pf:
         for line in pf:
             key, val = line.split(',')
             #gets the contents of the line excluding the newline character at the end
@@ -87,13 +95,16 @@ def list_account_names(password_dict):
         print(key)
 
 def save_quit(password_dict):
-    fname = "./passwords.txt"
+    fname = get_dirname() + "/passwords.txt"
     if not os.path.isfile(fname):
         print("Error: passwords file does not exist, a new password file will be created")
     
     with open(fname, mode = "w") as outfile:
         for key in password_dict:
             outfile.write(str(key) + "," + str(password_dict[key]) + "\n")
+
+def get_dirname():
+    return os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe())))
 
 def run_prog(password_dict):
     user_input = 0
@@ -119,9 +130,10 @@ def run_prog(password_dict):
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description = "store and retrieve passwords through the command line")
 
-    parser.add_argument("-n", "--new", help = "optional flag to add a new account and its associated password", 
+    # arguments are added in order of precedence
+    parser.add_argument("-n", "--new", help = "add a new account and its associated password", 
         required = False, action = "store_true")
-    parser.add_argument("-g", "--get", help = "optional flag to retrieve the password associated with a certain account",
+    parser.add_argument("-g", "--get", help = "retrieve the password associated with a certain account",
         required = False, action = "store_true")
     parser.add_argument("-a", "--acct", help = '''used with -n or -g to either add a new password or retrieve a password, 
         will do nothing if other flags are not specified''',
