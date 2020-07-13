@@ -8,103 +8,112 @@ import hashlib
 
 # currently only compatible with linux i think
 
-def login():
-    mpwd_file = get_dirname() + "/master_pass.txt"
+class PassManager:
+    """class that handles retrieval and storage of passwords"""
+    pwd_dict = {}
 
-    if not os.path.isfile(mpwd_file):
-        # if there is not a master password file that exists, create one
-        open(mpwd_file, mode="w")
+    def __init__(self):
+        self.pwd_dict = {}
 
-    with open(mpwd_file, mode="r+", encoding = "utf-8") as mp:
-        maspass = mp.readline()
-        if maspass != '':
-            pwd_in = str(input("Enter master password: ")).encode()
+    def login(self):
+        mpwd_file = self.__get_dirname() + "/master_pass.txt"
 
-            # check the hash of the password to see if it is correct
-            if maspass == hashlib.sha256(pwd_in).hexdigest():
-                print("correct password")
+        if not os.path.isfile(mpwd_file):
+            # if there is not a master password file that exists, create one
+            open(mpwd_file, mode="w")
+
+        with open(mpwd_file, mode="r+", encoding = "utf-8") as mp:
+            maspass = mp.readline()
+            if maspass != '':
+                pwd_in = str(input("Enter master password: ")).encode()
+
+                # check the hash of the password to see if it is correct
+                if maspass == hashlib.sha256(pwd_in).hexdigest():
+                    print("correct password")
+                    return True
+                else:
+                    print("password incorrect")
+                    return False
+            else:
+                self.add_new_master_pass(mp)
                 return True
-            else:
-                print("password incorrect")
-                return False
-        else:
-            add_new_master_pass(mp)
-            return True
-    print("login failed unexpectedly")
-    return False
+        print("login failed unexpectedly")
+        return False
 
-def add_new_master_pass(output_file):
-    print("It appears you have not set up a master password to use this password manager with.")
-    
-    # the user input is hashed before it is outputted
-    user_input = str(input("Please enter a password: ")).encode()
-    hashed_pwd_digest = hashlib.sha256(user_input).hexdigest()
-    output_file.write(hashed_pwd_digest)
+    def add_new_master_pass(self, output_file):
+        print("It appears you have not set up a master password to use this password manager with.")
+        
+        # the user input is hashed before it is outputted
+        user_input = str(input("Please enter a password: ")).encode()
+        hashed_pwd_digest = hashlib.sha256(user_input).hexdigest()
+        output_file.write(hashed_pwd_digest)
 
-def load_passwords():
-    pwd_file = get_dirname() + "/passwords.txt"
+    def load_passwords(self):
+        if self.pwd_dict:
+            return self.pwd_dict
+        
+        pwd_file = self.__get_dirname() + "/passwords.txt"
 
-    if not os.path.isfile(pwd_file):
-        open(pwd_file, mode="w")
-   
-    pass_dict = {}
+        if not os.path.isfile(pwd_file):
+            open(pwd_file, mode="w")
 
-    with open(pwd_file, mode="r") as pf:
-        for line in pf:
-            key, val = line.split(',')
-            # gets the contents of the line excluding the newline character at the end
-            if val[-1] == "\n":
-                pass_dict[key] = val[:-1]
-            else:
-                pass_dict[key] = val
-    
-    return pass_dict
+        with open(pwd_file, mode="r") as pf:
+            for line in pf:
+                key, val = line.split(',')
+                # gets the contents of the line excluding the newline character at the end
+                if val[-1] == "\n":
+                    self.pwd_dict[key] = val[:-1]
+                else:
+                    self.pwd_dict[key] = val
+        
+        return self.pwd_dict
 
-def get_password(password_dict, acct_name = ""):
-    if acct_name == "":
-        print("Enter the name of the account you would like the password for: ")
-        acct_name = str(input())
+    def get_password(self, acct_name = ""):
+        if acct_name == "":
+            print("Enter the name of the account you would like the password for: ")
+            acct_name = str(input())
 
-    while acct_name not in password_dict:
-        print("The account name you entered is not valid")
-        print("Please enter the name of a valid account: ")
-        acct_name = str(input())
-    
-    pyperclip.copy(password_dict[acct_name])
-    print("password for " + acct_name + " copied to clipboard")
+        while acct_name not in self.pwd_dict:
+            print("The account name you entered is not valid")
+            print("Please enter the name of a valid account: ")
+            acct_name = str(input())
+        
+        pyperclip.copy(self.pwd_dict[acct_name])
+        print("password for " + acct_name + " copied to clipboard")
 
-# should be replaced with a password generating function
-def add_new_password(password_dict, acct_name = ""):
-    if acct_name == "":
-        print("Enter account name: ")
-        acct_name = str(input())
+    # should be replaced with a password generating function
+    def add_new_password(self, acct_name = ""):
+        if acct_name == "":
+            print("Enter account name: ")
+            acct_name = str(input())
 
-    while acct_name in password_dict:
-        print("The account name you entered already has an associated password.\nPlease enter a different account name:")
-        acct_name = str(input())
+        while acct_name in self.pwd_dict:
+            print("The account name you entered already has an associated password.")
+            print("Please enter a different account name:")
+            acct_name = str(input())
 
-    print("Enter account password: ")
-    pwd = str(input())
-    password_dict[acct_name] = pwd
+        print("Enter account password: ")
+        pwd = str(input())
+        self.pwd_dict[acct_name] = pwd
 
-def list_account_names(password_dict):
-    print("\nThe accounts on this machine with associated passwords are:")
-    for key in password_dict:
-        print(key)
+    def list_account_names(self):
+        print("\nThe accounts on this machine with associated passwords are:")
+        for key in self.pwd_dict:
+            print(key)
 
-def save_quit(password_dict):
-    fname = get_dirname() + "/passwords.txt"
-    if not os.path.isfile(fname):
-        print("Error: passwords file does not exist, a new password file will be created")
-    
-    with open(fname, mode = "w") as outfile:
-        for key in password_dict:
-            outfile.write(str(key) + "," + str(password_dict[key]) + "\n")
+    def save_quit(self):
+        fname = self.__get_dirname() + "/passwords.txt"
+        if not os.path.isfile(fname):
+            print("Error: passwords file does not exist, a new password file will be created")
+        
+        with open(fname, mode = "w") as outfile:
+            for key in self.pwd_dict:
+                outfile.write(str(key) + "," + str(self.pwd_dict[key]) + "\n")
 
-def get_dirname():
-    return os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe())))
+    def __get_dirname(self):
+        return os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe())))
 
-def run_prog(password_dict):
+def run_prog():
     user_input = 0
     while user_input != 4:
         print("Enter the number corresponding what you want to do.")
@@ -119,11 +128,11 @@ def run_prog(password_dict):
 
         user_input = int(user_input)
         if user_input == 1:
-            get_password(password_dict)
+            manager.get_password()
         elif user_input == 2:
-            add_new_password(password_dict)
+            manager.add_new_password()
         elif user_input == 3:
-            list_account_names(password_dict)
+            manager.list_account_names()
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description = "store and retrieve passwords through the command line")
@@ -140,8 +149,9 @@ if __name__ == "__main__":
         required = False, action = "store_true")
 
     args = vars(parser.parse_args())
+    manager = PassManager()
 
-    if not login():
+    if not manager.login():
         print("login failed")
         quit()
     
@@ -150,7 +160,7 @@ if __name__ == "__main__":
     # put all of the user's passwords into a dictionary
     # k = account name
     # v = account password
-    passwords = load_passwords()
+    manager.load_passwords()
     
     '''for key in passwords:
         print(key + " " + passwords[key])
@@ -160,12 +170,12 @@ if __name__ == "__main__":
     print("\n")'''
 
     if args["new"] == True:
-        add_new_password(passwords, args["acct"])
+        manager.add_new_password(args["acct"])
     elif args["get"] == True:
-        get_password(passwords, args["acct"])
+        manager.get_password(args["acct"])
     elif args["list"] == True:
-        list_account_names(passwords)
+        manager.list_account_names()
     else:
-        run_prog(passwords)
+        run_prog()
         
-    save_quit(passwords)
+    manager.save_quit()
