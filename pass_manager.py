@@ -12,16 +12,15 @@ def login():
     mpwd_file = get_dirname() + "/master_pass.txt"
 
     if not os.path.isfile(mpwd_file):
-        #if there is not a master password file that exists, create one
+        # if there is not a master password file that exists, create one
         open(mpwd_file, mode="w")
 
     with open(mpwd_file, mode="r+", encoding = "utf-8") as mp:
         maspass = mp.readline()
         if maspass != '':
-            #print("mp file not empty")
             pwd_in = str(input("Enter master password: ")).encode()
 
-            #check the hash of the password to see if it is correct
+            # check the hash of the password to see if it is correct
             if maspass == hashlib.sha256(pwd_in).hexdigest():
                 print("correct password")
                 return True
@@ -29,7 +28,6 @@ def login():
                 print("password incorrect")
                 return False
         else:
-            #print("file empty but exists")
             add_new_master_pass(mp)
             return True
     print("login failed unexpectedly")
@@ -38,7 +36,7 @@ def login():
 def add_new_master_pass(output_file):
     print("It appears you have not set up a master password to use this password manager with.")
     
-    #the user input is hashed before it is outputted
+    # the user input is hashed before it is outputted
     user_input = str(input("Please enter a password: ")).encode()
     hashed_pwd_digest = hashlib.sha256(user_input).hexdigest()
     output_file.write(hashed_pwd_digest)
@@ -54,7 +52,7 @@ def load_passwords():
     with open(pwd_file, mode="r") as pf:
         for line in pf:
             key, val = line.split(',')
-            #gets the contents of the line excluding the newline character at the end
+            # gets the contents of the line excluding the newline character at the end
             if val[-1] == "\n":
                 pass_dict[key] = val[:-1]
             else:
@@ -75,7 +73,7 @@ def get_password(password_dict, acct_name = ""):
     pyperclip.copy(password_dict[acct_name])
     print("password for " + acct_name + " copied to clipboard")
 
-#should be replaced with a password generating function
+# should be replaced with a password generating function
 def add_new_password(password_dict, acct_name = ""):
     if acct_name == "":
         print("Enter account name: ")
@@ -149,9 +147,9 @@ if __name__ == "__main__":
     
     print("\nlogin successful")
     
-    #put all of the user's passwords into a dictionary
-    #k = account name
-    #v = account password
+    # put all of the user's passwords into a dictionary
+    # k = account name
+    # v = account password
     passwords = load_passwords()
     
     '''for key in passwords:
