@@ -5,15 +5,25 @@ import os.path
 import inspect
 import argparse
 import hashlib
+import base64
+from cryptography.fernet import Fernet as fnet
+from cryptography.hazmat.backends import default_backend
+from cryptography.hazmat.primitives import hashes
+from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
 
 # currently only compatible with linux i think
 
 class PassManager:
     """class that handles retrieval and storage of passwords"""
-    pwd_dict = {}
-
+    
+    # fields:
+    # pwd_dict = dictionary containing passwords and the accts they are associated with
+    # unsure if this is the correct way to store this key
+    # key = symmetric key for encrypting and decrypting the password file
+    
     def __init__(self):
         self.pwd_dict = {}
+        self.key = None
 
     def login(self):
         mpwd_file = self.__get_dirname() + "/master_pass.txt"
@@ -23,30 +33,46 @@ class PassManager:
             open(mpwd_file, mode="w")
 
         with open(mpwd_file, mode="r+", encoding = "utf-8") as mp:
-            maspass = mp.readline()
-            if maspass != '':
-                pwd_in = str(input("Enter master password: ")).encode()
+            mp_hash = mp.readline()
+            if mp_hash != '':
+                input_pwd = str(input("Enter master password: ")).encode()
 
                 # check the hash of the password to see if it is correct
-                if maspass == hashlib.sha256(pwd_in).hexdigest():
+                # should hash the password more than once
+                if mp_hash == hashlib.sha256(input_pwd).hexdigest():
+                    self.__gen_key(input_pwd)
                     print("correct password")
                     return True
                 else:
                     print("password incorrect")
                     return False
             else:
-                self.add_new_master_pass(mp)
-                return True
+                return self.__add_new_master_pass(mp)
         print("login failed unexpectedly")
         return False
 
-    def add_new_master_pass(self, output_file):
+    def __add_new_master_pass(self, output_file):
         print("It appears you have not set up a master password to use this password manager with.")
         
         # the user input is hashed before it is outputted
-        user_input = str(input("Please enter a password: ")).encode()
+        input_pwd = str(input("Please enter a password: ")).encode()
         hashed_pwd_digest = hashlib.sha256(user_input).hexdigest()
         output_file.write(hashed_pwd_digest)
+
+        self.__gen_key(input_pwd)
+        return True
+
+    def __gen_key(self, pwd):
+        # need to figure out how to produce a better salt
+        key_salt = b"saltine"
+        kdf = PBKDF2HMAC(
+            algorithm = hashes.SHA256(),
+            length = 32,
+            salt = key_salt,
+            iterations = 100, # doesn't need to actually be secure so only hashing a few times
+            backend = default_backend()
+        )
+        self.key = base64.urlsafe_b64encode(kdf.derive(pwd))
 
     def load_passwords(self):
         if self.pwd_dict:
@@ -73,6 +99,8 @@ class PassManager:
             print("Enter the name of the account you would like the password for: ")
             acct_name = str(input())
 
+        # need to ensure that the prorgam does not run forever
+        # ie pwd_dict is empty
         while acct_name not in self.pwd_dict:
             print("The account name you entered is not valid")
             print("Please enter the name of a valid account: ")
