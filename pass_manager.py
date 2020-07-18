@@ -19,11 +19,11 @@ class PassManager:
     # fields:
     # pwd_dict = dictionary containing passwords and the accts they are associated with
     # unsure if this is the correct way to store this key
-    # key = symmetric key for encrypting and decrypting the password file
+    # sym_key = symmetric key for encrypting and decrypting the password file
     
     def __init__(self):
         self.pwd_dict = {}
-        self.key = None
+        self.sym_key = None
 
     def login(self):
         mpwd_file = self.__get_dirname() + "/master_pass.txt"
@@ -56,7 +56,7 @@ class PassManager:
         
         # the user input is hashed before it is outputted
         input_pwd = str(input("Please enter a password: ")).encode()
-        hashed_pwd_digest = hashlib.sha256(user_input).hexdigest()
+        hashed_pwd_digest = hashlib.sha256(input_pwd).hexdigest()
         output_file.write(hashed_pwd_digest)
 
         self.__gen_key(input_pwd)
@@ -72,7 +72,7 @@ class PassManager:
             iterations = 100, # doesn't need to actually be secure so only hashing a few times
             backend = default_backend()
         )
-        self.key = base64.urlsafe_b64encode(kdf.derive(pwd))
+        self.sym_key = base64.urlsafe_b64encode(kdf.derive(pwd))
 
     def load_passwords(self):
         if self.pwd_dict:
@@ -85,12 +85,10 @@ class PassManager:
 
         with open(pwd_file, mode="r") as pf:
             for line in pf:
+                line = line.rstrip()  # remove trailing whitespace
                 key, val = line.split(',')
                 # gets the contents of the line excluding the newline character at the end
-                if val[-1] == "\n":
-                    self.pwd_dict[key] = val[:-1]
-                else:
-                    self.pwd_dict[key] = val
+                self.pwd_dict[key] = val
         
         return self.pwd_dict
 
