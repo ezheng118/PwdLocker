@@ -6,7 +6,7 @@ import inspect
 import argparse
 import hashlib
 import base64
-from cryptography.fernet import Fernet as fnet
+from cryptography.fernet import Fernet
 from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
@@ -84,11 +84,14 @@ class PassManager:
             open(pwd_file, mode="w")
 
         with open(pwd_file, mode="r") as pf:
+            fern = Fernet(self.sym_key)
             for line in pf:
                 line = line.rstrip()  # remove trailing whitespace
-                key, val = line.split(',')
+                encrypted_key, encrypted_val = line.split(',')
+                key = fern.decrypt(encrypted_key.encode())
+                val = fern.decrypt(encrypted_val.encode())
                 # gets the contents of the line excluding the newline character at the end
-                self.pwd_dict[key] = val
+                self.pwd_dict[key.decode()] = val.decode()
         
         return self.pwd_dict
 
@@ -133,8 +136,11 @@ class PassManager:
             print("Error: passwords file does not exist, a new password file will be created")
         
         with open(fname, mode = "w") as outfile:
+            fern = Fernet(self.sym_key)
             for key in self.pwd_dict:
-                outfile.write(str(key) + "," + str(self.pwd_dict[key]) + "\n")
+                encrypted_key = fern.encrypt(key.encode())
+                encrypted_val = fern.encrypt(self.pwd_dict[key].encode())
+                outfile.write(encrypted_key.decode() + "," + encrypted_val.decode() + "\n")
 
     def __get_dirname(self):
         return os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe())))
