@@ -87,10 +87,13 @@ class PassManager:
             fern = Fernet(self.sym_key)
             for line in pf:
                 line = line.rstrip()  # remove trailing whitespace
+
+                # get the encrypted password data
                 encrypted_key, encrypted_val = line.split(',')
+
+                # decrypt and store the password data
                 key = fern.decrypt(encrypted_key.encode())
                 val = fern.decrypt(encrypted_val.encode())
-                # gets the contents of the line excluding the newline character at the end
                 self.pwd_dict[key.decode()] = val.decode()
         
         return self.pwd_dict
@@ -100,8 +103,11 @@ class PassManager:
             print("Enter the name of the account you would like the password for: ")
             acct_name = str(input())
 
-        # need to ensure that the prorgam does not run forever
+        # need to ensure that the program does not run forever
         # ie pwd_dict is empty
+        if not self.pwd_dict:
+            return
+
         while acct_name not in self.pwd_dict:
             print("The account name you entered is not valid")
             print("Please enter the name of a valid account: ")
@@ -129,6 +135,7 @@ class PassManager:
         print("\nThe accounts on this machine with associated passwords are:")
         for key in self.pwd_dict:
             print(key)
+        print("\n")
 
     def save_quit(self):
         fname = self.__get_dirname() + "/passwords.txt"
