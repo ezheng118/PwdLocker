@@ -1,3 +1,4 @@
+import curses
 import cli_ui as ui
 from pass_manager import PassManager
 
@@ -7,16 +8,21 @@ class Locker_UI:
     # fields:
     # options -> holds the text describing the actions the user may choose to take
     # manager -> password manager object, model which manages the password data
+    # scr -> curses screen object
 
-    def __init__(self):
+    def __init__(self, stdscr):
         ui.setup(verbose=True, timestamp=True)
         self.options = ["Retrieve password", 
             "Add new password", 
             "List passwords", 
             "Save and quit"]
         self.manager = PassManager()
+        self.scrn = stdscr
+        self.scrn.clear()
 
     def login(self):
+        self.scrn.clear()
+
         if self.manager.login(ui.ask_password("Enter master password: ")):
             ui.info("Login successful")
             self.manager.load_passwords()
@@ -47,38 +53,101 @@ class Locker_UI:
 
     # begins running the pwdLocker program
     def start(self):
-        self.login()
+        self.draw_screen()
 
-        run = True
+    def draw_screen(self):
+        k = 0
+        cursor_x = 0
+        cursor_y = 0
 
-        while(run):
-            try:
-                user_input = ui.ask_choice("Select the action you would like to take.",
-                    choices=lui.options)
-            except KeyboardInterrupt:
-                user_input = None
-                quit()
-        
-            # choices:
-            # 1. retrieve pwd
-            # 2. add pwd
-            # 3. list accts
-            # 4. save quit
+        # make screen blank
+        self.scrn.clear()
+        self.scrn.refresh()
 
-            if user_input == None:
-                continue
-            elif user_input == "Retrieve password":
-                lui.get_pwd()
-            elif user_input == "Add new password":
-                lui.add_new_pwd()
-            elif user_input == "List passwords":
-                lui.list_accts()
-            elif user_input == "Save and quit":
-                lui.save_quit()
-                run = False
+        # start colors in curses
+        curses.start_color()
+        curses.init_pair(1, curses.COLOR_CYAN, curses.COLOR_BLACK)
+        curses.init_pair(2, curses.COLOR_RED, curses.COLOR_BLACK)
+        curses.init_pair(3, curses.COLOR_BLACK, curses.COLOR_WHITE)
 
+        while(k != ord('q')):
+            self.scrn.clear()
+            h, w = self.scrn.getmaxyx()
+
+            if k == curses.KEY_DOWN:
+                cursor_y = cursor_y + 1
+            elif k == curses.KEY_UP:
+                cursor_y = cursor_y - 1
+            elif k == curses.KEY_RIGHT:
+                cursor_x = cursor_x + 1
+            elif k == curses.KEY_LEFT:
+                cursor_x = cursor_x - 1
+
+            # keep cursor within screen bounds
+            cursor_x = max(0, cursor_x)
+            cursor_x = min(w-1, cursor_x)
+
+            cursor_y = max(0, cursor_y)
+            cursor_y = min(h-1, cursor_y)
+
+
+            # status text to be displayed
+            title = "test"[:w-1]
+            subtitle = "adapted from McLeod"[:w-1]
+            key_str = f"Last key pressed: {k}"[:w-1]
+            statusbar_str = f"Press 'q' to exit | STATUS BAR | Pos: {cursor_x}, {cursor_y}"
+
+            if k == 0:
+                key_str = "No key press detected..."[:w-1]
+            
+            # centering calculations
+            start_x_title = int((w // 2) - (len(title) // 2) -len(title) % 2)
+            start_x_subtitle = int((w // 2) - (len(subtitle) // 2) -len(subtitle) % 2)
+            start_x_keystr = int((w // 2) - (len(key_str) // 2) -len(key_str) % 2)
+            start_y = int((h // 2) - 2)
+
+            # rendering the text
+            whstr = f"Width: {w}, Height: {h}"
+            self.scrn.addstr(0, 0, whstr, curses.color_pair(1))
+
+            # render status bar
+            self.scrn.attron(curses.color_pair(3))
+            self.scrn.addstr(h-1, 0, statusbar_str)
+            self.scrn.addstr(h-1, len(statusbar_str), " " * (w - len(statusbar_str) - 1))
+            self.scrn.attroff(curses.color_pair(3))
+
+            # render title
+            self.scrn.attron(curses.color_pair(2))
+            self.scrn.attron(curses.A_BOLD)
+
+            self.scrn.addstr(start_y, start_x_title, title)
+            
+            self.scrn.attroff(curses.color_pair(2))
+            self.scrn.attroff(curses.A_BOLD)
+
+            # render the rest of the text
+            self.scrn.addstr(start_y + 1, start_x_subtitle, subtitle)
+            self.scrn.addstr(start_y + 3, (w // 2) - 2, "-" * 4)
+            self.scrn.addstr(start_y + 5, start_x_keystr, key_str)
+            
+            self.scrn.move(cursor_y, cursor_x)
+
+            self.scrn.refresh()
+
+            # wait for the next input
+            k = self.scrn.getch()
 
 if __name__ == "__main__":
-    lui = Locker_UI()
+    stdscr = curses.initscr()
+    curses.noecho()
+    curses.cbreak()
+    stdscr.keypad(True)
 
-    lui.start()
+    lui = Locker_UI(stdscr)
+
+    curses.wrapper(lui.start())
+
+    curses.nocbreak()
+    stdscr.keypad(False)
+    curses.echo()
+    curses.endwin()
