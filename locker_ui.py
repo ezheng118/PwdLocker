@@ -53,7 +53,33 @@ class Locker_UI:
 
     # begins running the pwdLocker program
     def start(self):
-        self.draw_screen()
+        self.ui_test()
+
+        return True
+    def ui_test(self):
+        k = 0
+        curs_x = 0
+        curs_y = 0
+
+        # h, w = self.scrn.getmaxyx()
+
+        heart = ui.Symbol("❤", "<3")
+
+        self.scrn.clear()
+        self.scrn.refresh()
+        ui.info(ui.blue, "line 1")
+
+        curs_y = curs_y + 1
+        self.scrn.move(curs_y, curs_x)
+        ui.info(ui.red, "line 2")
+
+        curs_y = curs_y + 1
+        self.scrn.move(curs_y, curs_x)
+        ui.info(ui.green, "press any button to continue", ui.fuschia, heart)
+
+        k = self.scrn.getch()
+
+        return True
 
     def draw_screen(self):
         k = 0
@@ -141,12 +167,15 @@ if __name__ == "__main__":
     stdscr = curses.initscr()
     curses.noecho()
     curses.cbreak()
+    # curses.curs_set(0)
     stdscr.keypad(True)
 
     lui = Locker_UI(stdscr)
 
-    curses.wrapper(lui.start())
+    # curses.wrapper(lui.start())
+    lui.start()
 
+    # curses.curs_set(1)
     curses.nocbreak()
     stdscr.keypad(False)
     curses.echo()
