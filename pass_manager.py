@@ -17,25 +17,25 @@ class PassManager:
     """class that handles retrieval and storage of passwords"""
     
     # fields:
-    # pwd_dict = dictionary containing passwords and the accts they are associated with
+    # pwd_dict -> dictionary containing passwords and the accts they are associated with
     # unsure if this is the correct way to store this key
-    # sym_key = symmetric key for encrypting and decrypting the password file
+    # sym_key -> symmetric key for encrypting and decrypting the password file
     
     def __init__(self):
         self.pwd_dict = {}
         self.sym_key = None
 
-    def login(self):
+    def login(self, input_pwd):
         mpwd_file = self.__get_dirname() + "/master_pass.txt"
 
+        # if there isn't an existing master password file, create one
         if not os.path.isfile(mpwd_file):
-            # if there is not a master password file that exists, create one
             open(mpwd_file, mode="w")
 
         with open(mpwd_file, mode="r+", encoding = "utf-8") as mp:
             mp_hash = mp.readline()
             if mp_hash != '':
-                input_pwd = str(input("Enter master password: ")).encode()
+                input_pwd = input_pwd.encode()
 
                 # check the hash of the password to see if it is correct
                 # should hash the password more than once
@@ -105,7 +105,7 @@ class PassManager:
 
         # need to ensure that the program does not run forever
         # ie pwd_dict is empty
-        if not self.pwd_dict:
+        if not self.pwd_dict or acct_name == "":
             return
 
         while acct_name not in self.pwd_dict:
@@ -117,7 +117,7 @@ class PassManager:
         print("password for " + acct_name + " copied to clipboard")
 
     # should be replaced with a password generating function
-    def add_new_password(self, acct_name = ""):
+    def add_new_password(self, acct_name = "", acct_pwd = ""):
         if acct_name == "":
             print("Enter account name: ")
             acct_name = str(input())
@@ -127,9 +127,10 @@ class PassManager:
             print("Please enter a different account name:")
             acct_name = str(input())
 
-        print("Enter account password: ")
-        pwd = str(input())
-        self.pwd_dict[acct_name] = pwd
+        if acct_pwd == "":
+            print("Enter account password: ")
+            acct_pwd = str(input())
+        self.pwd_dict[acct_name] = acct_pwd
 
     def list_account_names(self):
         print("\nThe accounts on this machine with associated passwords are:")
@@ -190,7 +191,7 @@ if __name__ == "__main__":
     args = vars(parser.parse_args())
     manager = PassManager()
 
-    if not manager.login():
+    if not manager.login(str(input("Enter master password: "))):
         print("login failed")
         quit()
     
@@ -200,13 +201,6 @@ if __name__ == "__main__":
     # k = account name
     # v = account password
     manager.load_passwords()
-    
-    '''for key in passwords:
-        print(key + " " + passwords[key])
-
-    for item in args:
-        print(item + " value: " + str(args[item]))
-    print("\n")'''
 
     if args["new"] == True:
         manager.add_new_password(args["acct"])
