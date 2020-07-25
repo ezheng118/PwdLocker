@@ -120,15 +120,24 @@ class PassManager:
             print("Enter account name: ")
             acct_name = str(input())
 
-        while acct_name in self.pwd_dict:
+        if acct_name in self.pwd_dict:
             print("The account name you entered already has an associated password.")
-            print("Please enter a different account name:")
-            acct_name = str(input())
+            return
 
         if acct_pwd == "":
             print("Enter account password: ")
             acct_pwd = str(input())
         self.pwd_dict[acct_name] = acct_pwd
+    
+    def rm_acct(self, acct_name = ""):
+        if acct_name == "":
+            print("Enter account name: ")
+            acct_name = str(input())
+
+        if acct_name not in self.pwd_dict:
+            print("The account name you entered does not exist.")
+        else:
+            self.pwd_dict.pop(acct_name)
 
     def list_account_names(self):
         print("\nThe accounts on this machine with associated passwords are:")

@@ -13,7 +13,8 @@ class Locker_UI:
     def __init__(self):
         ui.setup(verbose=True, timestamp=True)
         self.options = ["Retrieve password", 
-            "Add new password", 
+            "Add new account", 
+            "Remove account",
             "List passwords", 
             "Save and quit"]
         self.manager = PassManager()
@@ -44,6 +45,10 @@ class Locker_UI:
         else:
             self.manager.add_new_password(acct, pwd)
 
+    def __rm_acct(self):
+        acct = ui.ask_string("Enter the name of the new account:")
+        self.manager.rm_acct(acct)
+
     def __list_accts(self):
         self.manager.list_account_names()
 
@@ -55,8 +60,10 @@ class Locker_UI:
 
         if choice == "Retrieve password":
             self.__get_pwd()
-        elif choice == "Add new password":
+        elif choice == "Add new account":
             self.__add_new_pwd()
+        elif choice == "Remove account":
+            self.__rm_acct()
         elif choice == "List passwords":
             self.__list_accts()
         elif choice == "Save and quit":
