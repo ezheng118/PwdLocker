@@ -8,21 +8,20 @@ class Locker_UI:
     # fields:
     # options -> holds the text describing the actions the user may choose to take
     # manager -> password manager object, model which manages the password data
-    # scr -> curses screen object
+    # scrn -> curses screen object, not currently in use
 
-    def __init__(self, stdscr):
+    def __init__(self):
         ui.setup(verbose=True, timestamp=True)
         self.options = ["Retrieve password", 
             "Add new password", 
             "List passwords", 
             "Save and quit"]
         self.manager = PassManager()
-        self.scrn = stdscr
-        self.scrn.clear()
+        
+        # self.scrn = stdscr
+        # self.scrn.clear()
 
     def login(self):
-        self.scrn.clear()
-
         if self.manager.login(ui.ask_password("Enter master password: ")):
             ui.info("Login successful")
             self.manager.load_passwords()
@@ -53,9 +52,11 @@ class Locker_UI:
 
     # begins running the pwdLocker program
     def start(self):
-        self.ui_test()
+        self.login()
 
         return True
+
+'''
     def ui_test(self):
         k = 0
         curs_x = 0
@@ -162,12 +163,14 @@ class Locker_UI:
 
             # wait for the next input
             k = self.scrn.getch()
+'''
 
 if __name__ == "__main__":
+    '''
     stdscr = curses.initscr()
     curses.noecho()
     curses.cbreak()
-    # curses.curs_set(0)
+    curses.curs_set(0)
     stdscr.keypad(True)
 
     lui = Locker_UI(stdscr)
@@ -175,8 +178,10 @@ if __name__ == "__main__":
     # curses.wrapper(lui.start())
     lui.start()
 
-    # curses.curs_set(1)
+    curses.curs_set(1)
     curses.nocbreak()
     stdscr.keypad(False)
     curses.echo()
     curses.endwin()
+    '''
+    lui = Locker_UI()
