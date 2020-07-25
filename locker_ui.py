@@ -21,7 +21,7 @@ class Locker_UI:
         # self.scrn = stdscr
         # self.scrn.clear()
 
-    def login(self):
+    def __login(self):
         if self.manager.login(ui.ask_password("Enter master password: ")):
             ui.info("Login successful")
             self.manager.load_passwords()
@@ -29,11 +29,11 @@ class Locker_UI:
             ui.info("Login failed")
             quit()
 
-    def get_pwd(self):
+    def __get_pwd(self):
         acct = ui.ask_string("Enter the name of the account whose password you want:")
         self.manager.get_password(acct)
 
-    def add_new_pwd(self):
+    def __add_new_pwd(self):
         acct = ui.ask_string("Enter the name of the new account:")
         pwd = ui.ask_password("Enter the password for this account:")
         pwd_conf = ui.ask_password("Re-enter the password:")
@@ -44,17 +44,34 @@ class Locker_UI:
         else:
             self.manager.add_new_password(acct, pwd)
 
-    def list_accts(self):
+    def __list_accts(self):
         self.manager.list_account_names()
 
-    def save_quit(self):
+    def __save_quit(self):
         self.manager.save_quit()
+
+    def __menu(self):
+        choice = ui.ask_choice("Select an action", choices=self.options)
+
+        if choice == "Retrieve password":
+            self.__get_pwd()
+        elif choice == "Add new password":
+            self.__add_new_pwd()
+        elif choice == "List passwords":
+            self.__list_accts()
+        elif choice == "Save and quit":
+            self.__save_quit()
+            return False
+
+        return True
 
     # begins running the pwdLocker program
     def start(self):
-        self.login()
-
-        return True
+        self.__login()
+        
+        run = True
+        while(run):
+            run = self.__menu()
 
 '''
     def ui_test(self):
@@ -185,3 +202,4 @@ if __name__ == "__main__":
     curses.endwin()
     '''
     lui = Locker_UI()
+    lui.start()

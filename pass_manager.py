@@ -41,10 +41,8 @@ class PassManager:
                 # should hash the password more than once
                 if mp_hash == hashlib.sha256(input_pwd).hexdigest():
                     self.__gen_key(input_pwd)
-                    print("correct password")
                     return True
                 else:
-                    print("password incorrect")
                     return False
             else:
                 return self.__add_new_master_pass(mp)
