@@ -10,6 +10,7 @@ from cryptography.fernet import Fernet
 from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
+from info import ReturnCode
 
 # currently only compatible with linux i think
 
@@ -28,12 +29,9 @@ class PassManager:
     def login(self, input_pwd):
         mpwd_file = self.__get_dirname() + "/master_pass.txt"
 
-        # if there isn't an existing master password file, create one
-        if not os.path.isfile(mpwd_file):
-            open(mpwd_file, mode="w")
-
-        with open(mpwd_file, mode="r+", encoding = "utf-8") as mp:
+        with open(mpwd_file, mode="r+") as mp:
             mp_hash = mp.readline()
+
             if mp_hash != '':
                 input_pwd = input_pwd.encode()
 
@@ -41,24 +39,36 @@ class PassManager:
                 # should hash the password more than once
                 if mp_hash == hashlib.sha256(input_pwd).hexdigest():
                     self.__gen_key(input_pwd)
-                    return True
+                    return ReturnCode.success
                 else:
-                    return False
+                    return ReturnCode.incorrect_pwd
             else:
-                return self.__add_new_master_pass(mp)
-        print("login failed unexpectedly")
-        return False
+                return ReturnCode.no_master_pwd
+        return ReturnCode.unexpected_failure
 
-    def __add_new_master_pass(self, output_file):
-        print("It appears you have not set up a master password to use this password manager with.")
-        
-        # the user input is hashed before it is outputted
-        input_pwd = str(input("Please enter a password: ")).encode()
+    def add_new_master_pass(self, input_pwd):
+        mpwd_file = self.__get_dirname() + "/master_pass.txt"
+
+        # the user input is hashed before it is written
+        input_pwd = input_pwd.encode()
         hashed_pwd_digest = hashlib.sha256(input_pwd).hexdigest()
-        output_file.write(hashed_pwd_digest)
+
+        with open(mpwd_file, mode="w") as out_file:
+            out_file.write(hashed_pwd_digest)
 
         self.__gen_key(input_pwd)
-        return True
+        return ReturnCode.success
+
+    def mp_exists(self):
+        mpwd_file = self.__get_dirname() + "/master_pass.txt"
+
+        # check to see if a master password has been created yet
+        if os.path.isfile(mpwd_file):
+            with open(mpwd_file, mode="r+") as mp:
+                return mp.readline() != ""
+        else:
+            open(mpwd_file, mode="w")
+            return False
 
     def __gen_key(self, pwd):
         # need to figure out how to produce a better salt
@@ -160,6 +170,7 @@ class PassManager:
     def __get_dirname(self):
         return os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe())))
 
+'''
 def run_prog():
     user_input = 0
     while user_input != 4:
@@ -189,8 +200,8 @@ if __name__ == "__main__":
         required = False, action = "store_true")
     parser.add_argument("-g", "--get", help = "retrieve the password associated with a certain account",
         required = False, action = "store_true")
-    parser.add_argument("-a", "--acct", help = '''used with -n or -g to either add a new password or retrieve a password, 
-        will do nothing if other flags are not specified''',
+    parser.add_argument("-a", "--acct", help = "used with -n or -g to either add a new password or retrieve a password, 
+        will do nothing if other flags are not specified",
         required = False, default = "", type = str)
     parser.add_argument("-l", "--list", help = "lists the names of the accounts stored in the manager program",
         required = False, action = "store_true")
@@ -219,3 +230,4 @@ if __name__ == "__main__":
         run_prog()
         
     manager.save_quit()
+'''

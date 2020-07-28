@@ -1,8 +1,11 @@
+from os import system
+
 import curses
 import cli_ui as ui
 from pass_manager import PassManager
+from info import ReturnCode
 
-class Locker_UI:
+class LockerUI:
     '''class that acts as the ui for the program'''
 
     # fields:
@@ -23,12 +26,34 @@ class Locker_UI:
         # self.scrn.clear()
 
     def __login(self):
-        if self.manager.login(ui.ask_password("Enter master password: ")):
-            ui.info("Login successful")
-            self.manager.load_passwords()
+        if self.manager.mp_exists():
+            ret_val = self.manager.login(ui.ask_password("Enter master password: "))
+            
+            if ret_val == ReturnCode.success:
+                ui.info("Login successful")
+                self.manager.load_passwords()
+            elif ret_val == ReturnCode.no_master_pwd:
+                self.__new_master_pwd()
+            else:
+                ui.info("Login failed")
+                quit()
         else:
-            ui.info("Login failed")
-            quit()
+            self.__new_master_pwd()
+            
+    def __new_master_pwd(self):
+        ui.info("It appears you have not set up a master password to use this password manager with.")
+        pwd = ui.ask_password("Please enter a new master password:")
+        pwd_conf = ui.ask_password("Re-enter the password:")
+
+        if pwd == pwd_conf:
+            ret_val = self.manager.add_new_master_pass(pwd)
+
+            if ret_val == ReturnCode.success:
+                ui.info("New master password created successfully")
+                self.manager.load_passwords()
+        else:
+            ui.info("Passwords do not match")
+            ui.info("Add password operation failed")
 
     def __get_pwd(self):
         acct = ui.ask_string("Enter the name of the account whose password you want:")
@@ -39,11 +64,11 @@ class Locker_UI:
         pwd = ui.ask_password("Enter the password for this account:")
         pwd_conf = ui.ask_password("Re-enter the password:")
 
-        if pwd != pwd_conf:
-            ui.info("Passwords dont match")
-            ui.info("Add password operation failed")
-        else:
+        if pwd == pwd_conf:
             self.manager.add_new_password(acct, pwd)
+        else:
+            ui.info("Passwords do not match")
+            ui.info("Add password operation failed")
 
     def __rm_acct(self):
         acct = ui.ask_string("Enter the name of the new account:")
@@ -74,6 +99,7 @@ class Locker_UI:
 
     # begins running the pwdLocker program
     def start(self):
+        system("clear")
         self.__login()
         
         run = True
@@ -208,5 +234,5 @@ if __name__ == "__main__":
     curses.echo()
     curses.endwin()
     '''
-    lui = Locker_UI()
+    lui = LockerUI()
     lui.start()
