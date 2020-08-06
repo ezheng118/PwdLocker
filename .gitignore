@@ -4,3 +4,6 @@
 # byte-compiled files
 __pycache__/
 *.py[cod]
+
+# virtual environment file
+pass_manager_venv/
