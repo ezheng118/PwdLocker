@@ -24,9 +24,9 @@ class LockerUI:
         self.scrn.clear()
 
     def __login(self):
-        if self.manager.mp_exists():
-            h, w = self.scrn.getmaxyx()
+        h, w = self.scrn.getmaxyx()
 
+        if self.manager.mp_exists():
             # print login info towards the center of the screen
             cursor_y = (h // 2) - 2
             cursor_x = (w // 2)
@@ -35,14 +35,14 @@ class LockerUI:
             
             self.scrn.addstr(cursor_y, cursor_x - (len(mp_prompt) // 2), 
                 mp_prompt, curses.color_pair(1))
-            cursor_y = cursor_y + 1
+            cursor_y += 1
 
             # echo characters typed
             curses.echo()
 
             # get password
             pwd_in = self.scrn.getstr(cursor_y, cursor_x - (len(mp_prompt) // 2))
-            cursor_y = cursor_y + 1
+            cursor_y += 1
             
             # turn character echoing back off
             curses.noecho()
@@ -56,7 +56,7 @@ class LockerUI:
             if ret_val == ReturnCode.success:
                 self.scrn.addstr(cursor_y, cursor_x - 8, 
                     "Login successful", curses.color_pair(1))
-                cursor_y = cursor_y + 1
+                cursor_y += 1
                 
                 self.manager.load_passwords()
 
@@ -64,29 +64,40 @@ class LockerUI:
                     "Press any key to continue", curses.color_pair(1))
 
                 self.scrn.getch()
+
+                return True
             elif ret_val == ReturnCode.no_master_pwd:
                 print("Error: master password existence check failed")
-                return
+                return False
             else:
                 print("Login failed")
-                return
+                return False
         else: # need to set up a new password
-            self.scrn.addstr(0, 0, 
+            cursor_y = 0
+            cursor_x = 0
+
+            self.scrn.addstr(cursor_y, cursor_x, 
                 "It appears you have not set up a master password to use this password manager with.",
                 curses.color_pair(1))
-            self.scrn.addstr(1, 0,
+            cursor_y += 1
+
+            self.scrn.addstr(cursor_y, cursor_x,
                 "Please enter a new master password:",
                 curses.color_pair(1))
+            cursor_y += 1
             
             curses.echo()
 
-            pwd = self.scrn.getstr(2, 0)
+            pwd = self.scrn.getstr(cursor_y, cursor_x)
+            cursor_y += 1
 
-            self.scrn.addstr(3, 0,
+            self.scrn.addstr(cursor_y, cursor_x,
                 "Re-enter the password:",
                 curses.color_pair(1))
+            cursor_y += 1
             
-            pwd_conf = self.scrn.getstr(4, 0)
+            pwd_conf = self.scrn.getstr(cursor_y, cursor_x)
+            cursor_y += 1
 
             curses.noecho()
 
@@ -102,6 +113,8 @@ class LockerUI:
             else:
                 ui.info("Passwords do not match")
                 ui.info("Add password operation failed")
+
+                return False
             
     def __get_pwd(self):
         acct = ui.ask_string("Enter the name of the account whose password you want:")
@@ -140,9 +153,10 @@ class LockerUI:
         curses.init_pair(2, curses.COLOR_RED, curses.COLOR_BLACK)
         curses.init_pair(3, curses.COLOR_BLACK, curses.COLOR_WHITE)
 
-        self.__login()
+        if self.__login():
+            self.draw_menu()
 
-    def draw_screen(self):
+    def draw_menu(self):
         k = 0
         cursor_x = 0
         cursor_y = 0
