@@ -166,7 +166,19 @@ class LockerUI:
             elif k == curses.KEY_ENTER:
                 # launch into specific function based off
                 # of the cursor position
-                continue
+                if cursor_y == 1:
+                    # retrieve pwd
+                    self.__get_pwd()
+                elif cursor_y == 1:
+                    # add new password
+                    self.__add_new_pwd()
+                elif cursor_y == 1:
+                    # remove acct and associated pwd
+                    self.__rm_acct()
+                elif cursor_y == 1:
+                    # list pwds
+                    self.__list_accts()
+
             ''' no need to move left or right atm
             elif k == curses.KEY_RIGHT or k == ord('d'):
                 cursor_x = cursor_x + 1
@@ -181,7 +193,7 @@ class LockerUI:
             prompt = "Please select the action you'd like to take."[:w-1]
             options = ["Retrieve password", "Add new account",
                 "Remove account", "List passwords"]
-            statusbar_str = f"Press 'q' to exit | Press 'enter' to select | Pos: o, {cursor_y}"[:w-1]
+            statusbar_str = f"Press 'q' to exit | Press 'enter' to select | Pos: 0, {cursor_y}"[:w-1]
             
             # render the prompt for the user
             self.scrn.addstr(0, 0, prompt)
@@ -202,6 +214,7 @@ class LockerUI:
 
             # wait for the next input
             k = self.scrn.getch()
+        self.__save_quit()
 
 if __name__ == "__main__":
     stdscr = curses.initscr()
