@@ -132,13 +132,13 @@ class PassManager:
     
     def rm_acct(self, acct_name = ""):
         if acct_name == "":
-            print("Enter account name: ")
-            acct_name = str(input())
+            return ReturnCode.empty_input
 
         if acct_name not in self.pwd_dict:
-            print("The account name you entered does not exist.")
-        else:
-            self.pwd_dict.pop(acct_name)
+            return ReturnCode.acct_dne
+        
+        self.pwd_dict.pop(acct_name)
+        return ReturnCode.success
 
     # returns a list of names of accounts stored in the program
     def list_account_names(self):
