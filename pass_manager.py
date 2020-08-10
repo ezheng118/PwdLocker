@@ -130,7 +130,6 @@ class PassManager:
             return ReturnCode.empty_input
 
         if acct_name in self.pwd_dict:
-            print("The account name you entered already has an associated password.")
             return ReturnCode.repeat_acct
 
         self.pwd_dict[acct_name] = acct_pwd

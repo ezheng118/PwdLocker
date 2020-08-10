@@ -133,7 +133,16 @@ class LockerUI:
         curses.noecho()
 
         if pwd == pwd_conf:
-            self.manager.add_new_password(acct, pwd)
+            ret_val = self.manager.add_new_password(acct, pwd)
+
+            if ret_val != ReturnCode.success:
+                self.scrn.addstr(7, 0, f"Add password operation failed {ret_val}", curses.color_pair(2))
+                if ret_val == ReturnCode.empty_input:
+                    self.scrn.addstr(8, 0, "Cannot give empty account name or password", curses.color_pair(2))
+                elif ret_val == ReturnCode.repeat_acct:
+                    self.scrn.addstr(8, 0, "Account being added already exists", curses.color_pair(2))
+                self.scrn.addstr(9, 0, "Press any key to continue")
+                self.scrn.getch()
         else:
             self.scrn.addstr(7, 0, "Add password operation failed", curses.color_pair(2))
             self.scrn.addstr(8, 0, "Passwords do not match", curses.color_pair(2))
