@@ -110,8 +110,88 @@ class LockerUI:
                 return False
             
     def __get_pwd(self):
-        acct = ui.ask_string("Enter the name of the account whose password you want:")
-        self.manager.get_password(acct)
+        h, w = self.scrn.getmaxyx()
+        accts = self.manager.list_account_names()
+        bound = len(accts)
+        scrn_pos = 0
+        cursor_y = 0
+        k = 0
+        
+        self.scrn.clear()
+
+        while(k != ord('q')):
+            self.scrn.clear()
+
+            # render the list of accts
+            if k == curses.KEY_DOWN:
+                # move screen down
+                scrn_pos += 1
+                cursor_y += 1
+            elif k == curses.KEY_UP:
+                # move screen up
+                scrn_pos -= 1
+                cursor_y -= 1
+            elif k == ord('\n'):
+                acct_name = accts[cursor_y + scrn_pos]
+
+                ret_val = self.manager.get_password(acct_name)
+
+                self.__parse_get_error(ret_val)
+                return
+            
+            scrn_pos = max(0, scrn_pos) 
+            scrn_pos = min(scrn_pos, max(bound - h, 0))
+            cursor_y = max(0, cursor_y)
+            cursor_y = min(h-1, bound-1, cursor_y)
+             
+            for i, acct in enumerate(accts[scrn_pos:(scrn_pos+h-1)]):
+                if i == cursor_y:
+                    self.scrn.addstr(i, 0, acct, curses.color_pair(1))
+                else:
+                    self.scrn.addstr(i, 0, acct)
+
+            # render status bar
+            self.scrn.attron(curses.color_pair(3))
+
+            if k == ord('w'):
+                # take user input
+                statusbar_str = "Enter the acct name: "
+                self.scrn.addstr(h-1, 0, statusbar_str)
+
+                curses.echo()
+                acct_name = self.scrn.getstr(h-1, len(statusbar_str)).decode()
+                curses.noecho()
+                self.scrn.attroff(curses.color_pair(3))
+
+                ret_val = self.manager.get_password(acct_name)
+
+                self.__parse_get_error(ret_val)
+                return
+            else:
+                statusbar_str = f"Press 'q' to exit | Press 'enter' to select | Press 'w' to type | Pos: {scrn_pos}, {cursor_y} | {w}, {h}"[:w-1]
+                self.scrn.addstr(h-1, 0, statusbar_str)
+                self.scrn.addstr(h-1, len(statusbar_str), " " * (w - len(statusbar_str) - 1))
+                self.scrn.attroff(curses.color_pair(3))
+
+            self.scrn.refresh()
+
+            k = self.scrn.getch()
+
+        # self.manager.get_password(acct)
+
+    def __parse_get_error(self, return_val):
+        if return_val != ReturnCode.success:
+                self.scrn.clear()
+
+                self.scrn.addstr(0, 0, f"Add password operation failed {return_val}", curses.color_pair(2))
+                if return_val == ReturnCode.empty_input:
+                    self.scrn.addstr(1, 0, "Cannot give empty account name", curses.color_pair(2))
+                elif return_val == ReturnCode.acct_dne:
+                    self.scrn.addstr(1, 0, "Account doesn't exist", curses.color_pair(2))
+                elif return_val == ReturnCode.no_stored_pwds:
+                    self.scrn.addstr(1, 0, "There are no stored passwords", curses.color_pair(2))
+                self.scrn.addstr(2, 0, "Press any key to continue")
+                self.scrn.getch()
 
     def __add_new_pwd(self):
         self.scrn.clear()

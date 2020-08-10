@@ -107,22 +107,17 @@ class PassManager:
         return self.pwd_dict
 
     def get_password(self, acct_name = ""):
-        if acct_name == "":
-            print("Enter the name of the account you would like the password for: ")
-            acct_name = str(input())
-
-        # need to ensure that the program does not run forever
-        # ie pwd_dict is empty
-        if not self.pwd_dict or acct_name == "":
-            return
-
-        while acct_name not in self.pwd_dict:
-            print("The account name you entered is not valid")
-            print("Please enter the name of a valid account: ")
-            acct_name = str(input())
+        if not self.pwd_dict:
+            # need to ensure that the program does not run forever
+            # ie pwd_dict is empty
+            return ReturnCode.no_stored_pwds
+        elif acct_name == "":
+            return ReturnCode.empty_input
+        elif acct_name not in self.pwd_dict:
+            return ReturnCode.acct_dne
         
         pyperclip.copy(self.pwd_dict[acct_name])
-        print("password for " + acct_name + " copied to clipboard")
+        return ReturnCode.success
 
     # should be replaced with a password generating function
     def add_new_password(self, acct_name = "", acct_pwd = ""):
