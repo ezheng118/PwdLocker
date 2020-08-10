@@ -149,11 +149,9 @@ class PassManager:
         else:
             self.pwd_dict.pop(acct_name)
 
+    # returns a list of names of accounts stored in the program
     def list_account_names(self):
-        print("\nThe accounts on this machine with associated passwords are:")
-        for key in self.pwd_dict:
-            print(key)
-        print("\n")
+        return list(self.pwd_dict.keys())
 
     def save_quit(self):
         fname = self.__get_dirname() + "/passwords.txt"

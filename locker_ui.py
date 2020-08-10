@@ -130,7 +130,41 @@ class LockerUI:
         self.manager.rm_acct(acct)
 
     def __list_accts(self):
-        self.manager.list_account_names()
+        h, w = self.scrn.getmaxyx()
+        accts = self.manager.list_account_names()
+        bound = len(accts)
+        pos = 0
+        k = 0
+
+        while(k != ord('q') and k != ord('\n')):
+            self.scrn.clear()
+
+            if k == curses.KEY_DOWN:
+                # move screen down
+                pos += 1
+            elif k == curses.KEY_UP:
+                # move screen up
+                pos -= 1
+
+            pos = max(0, pos) 
+            pos = min(pos, max(bound - h, 0))
+            
+            statusbar_str = f"Press 'q' or 'enter' to exit | Pos: {pos} | {w}, {h}"[:w-1]
+
+            self.scrn.attron(curses.color_pair(1))
+            for i, acct in enumerate(accts[pos:(pos+h-1)]):
+                self.scrn.addstr(i, 0, acct)
+            self.scrn.attroff(curses.color_pair(1))
+
+            # render status bar
+            self.scrn.attron(curses.color_pair(3))
+            self.scrn.addstr(h-1, 0, statusbar_str)
+            self.scrn.addstr(h-1, len(statusbar_str), " " * (w - len(statusbar_str) - 1))
+            self.scrn.attroff(curses.color_pair(3))
+
+            self.scrn.refresh()
+
+            k = self.scrn.getch()
 
     def __save_quit(self):
         self.manager.save_quit()
@@ -163,27 +197,21 @@ class LockerUI:
                 cursor_y = cursor_y + 1
             elif k == curses.KEY_UP or k == ord('w'):
                 cursor_y = cursor_y - 1
-            elif k == curses.KEY_ENTER:
+            elif k == ord('\n'):
                 # launch into specific function based off
                 # of the cursor position
                 if cursor_y == 1:
                     # retrieve pwd
                     self.__get_pwd()
-                elif cursor_y == 1:
+                elif cursor_y == 2:
                     # add new password
                     self.__add_new_pwd()
-                elif cursor_y == 1:
+                elif cursor_y == 3:
                     # remove acct and associated pwd
                     self.__rm_acct()
-                elif cursor_y == 1:
+                elif cursor_y == 4:
                     # list pwds
                     self.__list_accts()
-
-            ''' no need to move left or right atm
-            elif k == curses.KEY_RIGHT or k == ord('d'):
-                cursor_x = cursor_x + 1
-            elif k == curses.KEY_LEFT or k == ord('a'):
-                cursor_x = cursor_x - 1'''
 
             # keep cursor within menu bounds
             cursor_y = max(1, cursor_y)
