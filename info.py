@@ -8,3 +8,6 @@ class ReturnCode(enum.Enum):
     incorrect_pwd = 1
     no_master_pwd = 2
     unexpected_failure = 100
+    
+    repeat_acct = 3
+    empty_input = 4

@@ -126,18 +126,15 @@ class PassManager:
 
     # should be replaced with a password generating function
     def add_new_password(self, acct_name = "", acct_pwd = ""):
-        if acct_name == "":
-            print("Enter account name: ")
-            acct_name = str(input())
+        if acct_name == "" or acct_pwd == "":
+            return ReturnCode.empty_input
 
         if acct_name in self.pwd_dict:
             print("The account name you entered already has an associated password.")
-            return
+            return ReturnCode.repeat_acct
 
-        if acct_pwd == "":
-            print("Enter account password: ")
-            acct_pwd = str(input())
         self.pwd_dict[acct_name] = acct_pwd
+        return ReturnCode.success
     
     def rm_acct(self, acct_name = ""):
         if acct_name == "":

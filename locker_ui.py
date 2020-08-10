@@ -37,12 +37,11 @@ class LockerUI:
             # get password
             pwd_in = self.scrn.getstr(cursor_y, cursor_x - (len(mp_prompt) // 2))
             cursor_y += 1
+            # returns the string as bytes so it needs to be decoded
+            pwd_in = pwd_in.decode()
             
             # turn character echoing back off
             curses.noecho()
-
-            # returns the string as byts so it needs to be decoded
-            pwd_in = pwd_in.decode()
 
             # check login credentials
             ret_val = self.manager.login(pwd_in)
@@ -115,15 +114,32 @@ class LockerUI:
         self.manager.get_password(acct)
 
     def __add_new_pwd(self):
-        acct = ui.ask_string("Enter the name of the new account:")
-        pwd = ui.ask_password("Enter the password for this account:")
-        pwd_conf = ui.ask_password("Re-enter the password:")
+        self.scrn.clear()
+
+        # turn on echo
+        curses.echo()
+
+        self.scrn.addstr(0, 0, "Enter the name of the new account:")
+        self.scrn.attron(curses.color_pair(1))
+        acct = self.scrn.getstr(1, 0).decode()
+        self.scrn.attroff(curses.color_pair(1))
+
+        self.scrn.addstr(2, 0, "Enter the password for this account:")
+        pwd = self.scrn.getstr(3, 0).decode()
+        self.scrn.addstr(4, 0, "Re-enter the password:")
+        pwd_conf = self.scrn.getstr(5, 0).decode()
+
+        # turn off echo
+        curses.noecho()
 
         if pwd == pwd_conf:
             self.manager.add_new_password(acct, pwd)
         else:
-            ui.info("Passwords do not match")
-            ui.info("Add password operation failed")
+            self.scrn.addstr(7, 0, "Add password operation failed", curses.color_pair(2))
+            self.scrn.addstr(8, 0, "Passwords do not match", curses.color_pair(2))
+            self.scrn.addstr(9, 0, "Press any key to continue")
+            self.scrn.getch()
+        self.scrn.clear()
 
     def __rm_acct(self):
         acct = ui.ask_string("Enter the name of the new account:")
@@ -212,6 +228,7 @@ class LockerUI:
                 elif cursor_y == 4:
                     # list pwds
                     self.__list_accts()
+                self.scrn.clear()
 
             # keep cursor within menu bounds
             cursor_y = max(1, cursor_y)
