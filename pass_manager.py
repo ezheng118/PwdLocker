@@ -107,53 +107,42 @@ class PassManager:
         return self.pwd_dict
 
     def get_password(self, acct_name = ""):
-        if acct_name == "":
-            print("Enter the name of the account you would like the password for: ")
-            acct_name = str(input())
-
-        # need to ensure that the program does not run forever
-        # ie pwd_dict is empty
-        if not self.pwd_dict or acct_name == "":
-            return
-
-        while acct_name not in self.pwd_dict:
-            print("The account name you entered is not valid")
-            print("Please enter the name of a valid account: ")
-            acct_name = str(input())
+        if not self.pwd_dict:
+            # need to ensure that the program does not run forever
+            # ie pwd_dict is empty
+            return ReturnCode.no_stored_pwds
+        elif acct_name == "":
+            return ReturnCode.empty_input
+        elif acct_name not in self.pwd_dict:
+            return ReturnCode.acct_dne
         
         pyperclip.copy(self.pwd_dict[acct_name])
-        print("password for " + acct_name + " copied to clipboard")
+        return ReturnCode.success
 
     # should be replaced with a password generating function
     def add_new_password(self, acct_name = "", acct_pwd = ""):
-        if acct_name == "":
-            print("Enter account name: ")
-            acct_name = str(input())
+        if acct_name == "" or acct_pwd == "":
+            return ReturnCode.empty_input
 
         if acct_name in self.pwd_dict:
-            print("The account name you entered already has an associated password.")
-            return
+            return ReturnCode.repeat_acct
 
-        if acct_pwd == "":
-            print("Enter account password: ")
-            acct_pwd = str(input())
         self.pwd_dict[acct_name] = acct_pwd
+        return ReturnCode.success
     
     def rm_acct(self, acct_name = ""):
         if acct_name == "":
-            print("Enter account name: ")
-            acct_name = str(input())
+            return ReturnCode.empty_input
 
         if acct_name not in self.pwd_dict:
-            print("The account name you entered does not exist.")
-        else:
-            self.pwd_dict.pop(acct_name)
+            return ReturnCode.acct_dne
+        
+        self.pwd_dict.pop(acct_name)
+        return ReturnCode.success
 
+    # returns a list of names of accounts stored in the program
     def list_account_names(self):
-        print("\nThe accounts on this machine with associated passwords are:")
-        for key in self.pwd_dict:
-            print(key)
-        print("\n")
+        return list(self.pwd_dict.keys())
 
     def save_quit(self):
         fname = self.__get_dirname() + "/passwords.txt"
