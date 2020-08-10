@@ -193,9 +193,9 @@ class LockerUI:
             self.scrn.clear()
             h, w = self.scrn.getmaxyx()
 
-            if k == curses.KEY_DOWN or k == ord('s'):
+            if k == curses.KEY_DOWN:
                 cursor_y = cursor_y + 1
-            elif k == curses.KEY_UP or k == ord('w'):
+            elif k == curses.KEY_UP:
                 cursor_y = cursor_y - 1
             elif k == ord('\n'):
                 # launch into specific function based off
